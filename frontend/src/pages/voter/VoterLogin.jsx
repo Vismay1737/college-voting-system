@@ -34,7 +34,20 @@ export default function VoterLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-surface-950 via-primary-950/30 to-surface-950 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-surface-950 via-primary-950/30 to-surface-950 p-4 relative">
+      {/* Top Header Navigation */}
+      <div className="absolute top-4 right-4 z-20">
+        <a
+          href="/admin/login"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-surface-200 bg-surface-900/80 hover:bg-surface-800 border border-surface-700/50 rounded-xl shadow-lg backdrop-blur-md transition-all duration-200"
+        >
+          <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Admin Portal
+        </a>
+      </div>
+
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-[500px] h-[500px] bg-primary-500/3 rounded-full blur-3xl animate-pulse-soft"></div>
