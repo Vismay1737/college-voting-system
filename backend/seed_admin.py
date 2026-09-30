@@ -20,20 +20,30 @@ async def main():
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
         from sqlalchemy import select
-        res = await session.execute(select(Admin).where(Admin.username == "admin"))
-        existing = res.scalar_one_or_none()
-        if existing:
-            print("Admin user 'admin' already exists in Neon database!")
-            return
+        
+        target_users = [
+            ("vismay", "vismayvm943@"),
+            ("visamy", "vismayvm943@"),
+            ("admin", "vismayvm943@")
+        ]
 
-        admin = Admin(
-            username="admin",
-            password_hash=hash_password("admin1234"),
-            is_active=True
-        )
-        session.add(admin)
+        for u_name, u_pass in target_users:
+            res = await session.execute(select(Admin).where(Admin.username == u_name))
+            existing = res.scalar_one_or_none()
+            if existing:
+                existing.password_hash = hash_password(u_pass)
+                print(f"Updated password for admin user '{u_name}'")
+            else:
+                admin = Admin(
+                    username=u_name,
+                    password_hash=hash_password(u_pass),
+                    is_active=True
+                )
+                session.add(admin)
+                print(f"Created admin user '{u_name}'")
+
         await session.commit()
-        print("✓ Admin user 'admin' with password 'admin1234' successfully created in Neon DB!")
+        print("All admin accounts initialized successfully in Neon DB!")
 
 if __name__ == "__main__":
     asyncio.run(main())
