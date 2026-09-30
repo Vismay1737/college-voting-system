@@ -101,11 +101,14 @@ export default function VoterLogin() {
           </button>
         </form>
 
-        <div className="mt-8 pt-4 border-t border-surface-700/30">
-          <p className="text-center text-xs text-surface-500">
+        <div className="mt-8 pt-4 border-t border-surface-700/30 text-center">
+          <p className="text-xs text-surface-500 mb-3">
             Use the credentials provided by your class coordinator.
             <br />Your vote is confidential and protected.
           </p>
+          <a href="/admin/login" className="text-xs text-primary-400 hover:text-primary-300 font-medium transition-colors">
+            🔒 Admin Portal Login →
+          </a>
         </div>
       </div>
     </div>
