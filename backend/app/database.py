@@ -1,4 +1,6 @@
+import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase
 from app.config import get_settings
 
@@ -13,10 +15,17 @@ elif db_url.startswith("postgresql://") and "+asyncpg" not in db_url:
 if "asyncpg" in db_url and "sslmode=" in db_url:
     db_url = db_url.replace("sslmode=", "ssl=")
 
+# Detect serverless environment (Vercel, AWS Lambda, etc.)
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
 engine_kwargs = {"echo": settings.DEBUG}
 if "sqlite" in db_url:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+elif is_serverless:
+    # Serverless: use NullPool — no persistent connections
+    engine_kwargs["poolclass"] = NullPool
 else:
+    # Traditional server: use connection pooling
     engine_kwargs["pool_pre_ping"] = True
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 5

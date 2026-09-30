@@ -97,11 +97,23 @@ export default function VotingPage() {
             )}
             <span className="font-semibold text-surface-200 text-sm">{ballot.election.name}</span>
           </div>
-          {step === 'vote' && (
-            <span className="text-xs text-surface-500">
-              {Object.keys(selections).length} / {ballot.posts.length} selected
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {step === 'vote' && (
+              <span className="text-xs text-surface-500">
+                {Object.keys(selections).length} / {ballot.posts.length} selected
+              </span>
+            )}
+            <a
+              href="/admin/login"
+              className="text-xs text-surface-500 hover:text-primary-400 transition-colors flex items-center gap-1"
+              title="Admin Portal"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="hidden sm:inline">Admin</span>
+            </a>
+          </div>
         </div>
       </header>
 
