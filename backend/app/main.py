@@ -42,9 +42,20 @@ app.add_middleware(
 )
 
 
+_db_initialized = False
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
-    """Add security headers to all responses."""
+    """Add security headers to all responses and ensure DB is initialized."""
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            await init_db()
+            _db_initialized = True
+        except Exception as e:
+            print(f"Serverless DB init notice: {e}")
+
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

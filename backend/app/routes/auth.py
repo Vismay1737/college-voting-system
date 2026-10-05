@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.database import get_db
 from app.models.admin import Admin
@@ -19,8 +19,9 @@ async def admin_login(
     db: AsyncSession = Depends(get_db),
 ):
     """Admin login endpoint."""
+    username_clean = login_data.username.strip()
     result = await db.execute(
-        select(Admin).where(Admin.username == login_data.username)
+        select(Admin).where(func.lower(Admin.username) == username_clean.lower())
     )
     admin = result.scalar_one_or_none()
 

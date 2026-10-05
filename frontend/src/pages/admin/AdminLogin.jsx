@@ -27,7 +27,9 @@ export default function AdminLogin() {
       toast.success(`Welcome back, ${res.data.user_name}!`);
       navigate('/admin/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Login failed. Invalid credentials.');
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : (err.message || 'Login failed. Invalid credentials.');
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

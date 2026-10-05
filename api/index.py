@@ -19,21 +19,3 @@ if env_file.is_file():
         pass  # python-dotenv not required if env vars are set by Vercel
 
 from app.main import app
-from app.database import init_db
-import asyncio
-
-# Ensure DB tables & admin exist on cold start
-try:
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    
-    if loop.is_running():
-        loop.create_task(init_db())
-    else:
-        loop.run_until_complete(init_db())
-except Exception as e:
-    print(f"Vercel init_db warning: {e}")
-
