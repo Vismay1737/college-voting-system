@@ -74,7 +74,28 @@ app.include_router(voting.router, prefix="/api")
 app.include_router(audit.router, prefix="/api")
 
 
+from app.database import get_db, async_session_factory
+from sqlalchemy import select
+from app.models.admin import Admin
+
+
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "app": settings.APP_NAME}
+    """Health check endpoint with DB status."""
+    db_status = "ok"
+    admin_list = []
+    try:
+        await init_db()
+        async with async_session_factory() as session:
+            res = await session.execute(select(Admin.username))
+            admin_list = [r[0] for r in res.all()]
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status": "healthy" if db_status == "ok" else "degraded",
+        "app": settings.APP_NAME,
+        "db": db_status,
+        "admin_count": len(admin_list),
+        "admins": admin_list
+    }

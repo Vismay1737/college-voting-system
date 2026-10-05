@@ -31,7 +31,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     """Verify a password against an Argon2id hash."""
     try:
         return ph.verify(password_hash, password)
-    except VerifyMismatchError:
+    except Exception:
         return False
 
 
