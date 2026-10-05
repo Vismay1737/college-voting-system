@@ -55,9 +55,43 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """Create all tables on startup."""
+    """Create all tables on startup and seed default admin accounts if missing."""
     async with engine.begin() as conn:
         from app.models import (  # noqa: F401
             admin, voter, election, audit_log
         )
         await conn.run_sync(Base.metadata.create_all)
+
+    # Auto-seed default admin accounts if none exist
+    try:
+        async with async_session_factory() as session:
+            from app.models.admin import Admin
+            from app.utils.security import hash_password
+            from sqlalchemy import select
+            
+            result = await session.execute(select(Admin))
+            admins = result.scalars().all()
+            
+            existing_usernames = {a.username.lower() for a in admins}
+            default_accounts = [
+                ("admin", "vismayvm943@"),
+                ("vismay", "vismayvm943@"),
+                ("visamy", "vismayvm943@"),
+            ]
+
+            added = False
+            for username, password in default_accounts:
+                if username.lower() not in existing_usernames:
+                    new_admin = Admin(
+                        username=username,
+                        password_hash=hash_password(password),
+                        is_active=True,
+                    )
+                    session.add(new_admin)
+                    added = True
+            
+            if added:
+                await session.commit()
+    except Exception as e:
+        print(f"Warning: Auto-seeding default admin error: {e}")
+

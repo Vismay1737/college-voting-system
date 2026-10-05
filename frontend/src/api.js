@@ -14,18 +14,20 @@ api.interceptors.request.use(
   (config) => {
     const adminToken = localStorage.getItem('admin_token');
     const voterToken = localStorage.getItem('voter_token');
+    const url = config.url || '';
 
-    // Determine which token to use based on URL
-    if (config.url?.startsWith('/admin')) {
-      if (adminToken) {
-        config.headers.Authorization = `Bearer ${adminToken}`;
-      }
-    } else if (config.url?.startsWith('/voter')) {
+    // Check if the route is explicit voter route
+    if (url.includes('/voter/') || url.startsWith('voter/')) {
       if (voterToken) {
         config.headers.Authorization = `Bearer ${voterToken}`;
       }
     } else {
-      // For auth endpoints, no token needed
+      // Default to admin token if available, or voter token
+      if (adminToken) {
+        config.headers.Authorization = `Bearer ${adminToken}`;
+      } else if (voterToken) {
+        config.headers.Authorization = `Bearer ${voterToken}`;
+      }
     }
 
     return config;

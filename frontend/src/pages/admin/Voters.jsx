@@ -99,7 +99,7 @@ export default function Voters() {
       const res = await api.post('/admin/voters/confirm-import', mapping);
       setCredentials(res.data);
       setUploadStep('credentials');
-      toast.success(`${res.data.imported_count} voters imported!`);
+      toast.success(`${res.data.imported_count} voters imported successfully!`);
       loadVoters();
       loadClasses();
     } catch (err) {
@@ -120,11 +120,11 @@ export default function Voters() {
   };
 
   const handleResetPassword = async (voterId) => {
-    if (!confirm('Reset this voter\'s password? The old password will be invalidated immediately.')) return;
+    if (!confirm('Reset this voter\'s password? A new random voting password will be generated.')) return;
     try {
       const res = await api.post(`/admin/voters/${voterId}/reset-password`);
       setResetResult(res.data);
-      toast.success('Password reset');
+      toast.success('Password reset successfully');
     } catch (err) {
       toast.error('Failed to reset password');
     }
@@ -177,7 +177,7 @@ export default function Voters() {
     a.download = `voter_credentials_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Credentials exported');
+    toast.success('Credentials exported as CSV');
   };
 
   const closeUploadModal = () => {
@@ -188,166 +188,268 @@ export default function Voters() {
     setCredentials(null);
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-80 gap-3">
+        <div className="w-10 h-10 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+        <p className="text-surface-400 text-sm font-semibold">Loading Student Voter Records...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="page-title">Voters</h1>
-        <button onClick={() => setShowUpload(true)} className="btn-primary">📊 Import from Excel</button>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Page Title & Header Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="page-title">
+            <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span>Voter Management</span>
+          </h1>
+          <p className="text-surface-400 text-sm mt-1">Manage student accounts, credentials, and Excel bulk imports.</p>
+        </div>
+
+        <button onClick={() => setShowUpload(true)} className="btn-primary flex items-center justify-center gap-2 py-3 px-6 shadow-xl shadow-primary-500/25">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Bulk Import Voters (Excel)</span>
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="glass-card p-4 flex flex-col sm:flex-row gap-3">
-        <input
-          className="input-field flex-1"
-          placeholder="Search by USN or Name..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-        />
-        <select className="input-field !w-auto" value={filterClass} onChange={e => { setFilterClass(e.target.value); setPage(1); }}>
-          <option value="">All Classes</option>
-          {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
-        </select>
-        <select className="input-field !w-auto" value={filterVoted} onChange={e => { setFilterVoted(e.target.value); setPage(1); }}>
-          <option value="">All Status</option>
-          <option value="true">Voted</option>
-          <option value="false">Not Voted</option>
-        </select>
-      </div>
+      {/* Search & Filter Bar */}
+      <div className="glass-card p-5 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative flex-1 w-full">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-500">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            className="input-field pl-11"
+            placeholder="Search voters by USN or Name..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
 
-      <p className="text-sm text-surface-400">{totalCount} voter{totalCount !== 1 ? 's' : ''} found</p>
+        <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:w-auto">
+          <select className="input-field !w-auto" value={filterClass} onChange={e => { setFilterClass(e.target.value); setPage(1); }}>
+            <option value="">All Classes & Branches</option>
+            {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
+          </select>
+
+          <select className="input-field !w-auto" value={filterVoted} onChange={e => { setFilterVoted(e.target.value); setPage(1); }}>
+            <option value="">All Voting Status</option>
+            <option value="true">✓ Voted</option>
+            <option value="false">⏳ Not Voted</option>
+          </select>
+        </div>
+      </div>
 
       {/* Voters Table */}
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>USN</th>
-              <th>Name</th>
-              <th>Class</th>
-              <th>Status</th>
-              <th>Voted</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {voters.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-8 text-surface-500">No voters found</td></tr>
-            ) : (
-              voters.map((voter) => (
-                <tr key={voter.id}>
-                  <td className="font-mono text-sm text-surface-200">{voter.usn}</td>
-                  <td className="text-surface-300">{voter.name || '—'}</td>
-                  <td className="text-surface-400">{voter.class_name || '—'}</td>
-                  <td>
-                    <span className={voter.is_active ? 'badge-success' : 'badge-danger'}>
-                      {voter.is_active ? 'Active' : 'Disabled'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={voter.has_voted ? 'badge-success' : 'badge-neutral'}>
-                      {voter.has_voted ? '✓ Voted' : 'Not Voted'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleToggleActive(voter.id)}
-                        className="px-2 py-1 text-xs rounded-lg bg-surface-700/50 text-surface-300 hover:bg-surface-600/50 transition-colors"
-                        title={voter.is_active ? 'Disable' : 'Enable'}
-                      >
-                        {voter.is_active ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
-                        onClick={() => handleResetPassword(voter.id)}
-                        className="px-2 py-1 text-xs rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
-                      >
-                        Reset PW
-                      </button>
-                    </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-sm font-bold text-surface-400 uppercase tracking-wider">
+            Showing {voters.length} of {totalCount} Registered Voters
+          </span>
+        </div>
+
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Student USN</th>
+                <th>Full Name</th>
+                <th>Class / Branch</th>
+                <th>Account Status</th>
+                <th>Voting Status</th>
+                <th className="text-right">Manage Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {voters.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-surface-400">
+                    No voters found matching current filter parameters.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                voters.map((voter) => (
+                  <tr key={voter.id}>
+                    <td className="font-mono text-sm font-bold text-primary-300">{voter.usn}</td>
+                    <td className="text-white font-semibold">{voter.name || '—'}</td>
+                    <td className="text-surface-300">{voter.class_name || '—'}</td>
+                    <td>
+                      <span className={voter.is_active ? 'badge-success' : 'badge-danger'}>
+                        {voter.is_active ? 'Active' : 'Disabled'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={voter.has_voted ? 'badge-success' : 'badge-neutral'}>
+                        {voter.has_voted ? '✓ Voted' : 'Pending'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleToggleActive(voter.id)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-colors ${
+                            voter.is_active
+                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                          }`}
+                        >
+                          {voter.is_active ? 'Disable Account' : 'Enable Account'}
+                        </button>
+                        <button
+                          onClick={() => handleResetPassword(voter.id)}
+                          className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z" />
+                          </svg>
+                          <span>Reset Password</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}
       {totalCount > 50 && (
-        <div className="flex justify-center gap-2">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary text-sm !px-3 !py-1.5">← Prev</button>
-          <span className="px-4 py-1.5 text-sm text-surface-400">Page {page} of {Math.ceil(totalCount / 50)}</span>
-          <button onClick={() => setPage(p => p + 1)} disabled={page * 50 >= totalCount} className="btn-secondary text-sm !px-3 !py-1.5">Next →</button>
+        <div className="flex items-center justify-between glass-card p-4">
+          <span className="text-xs text-surface-400 font-semibold">
+            Page {page} of {Math.ceil(totalCount / 50)}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="btn-secondary text-xs !px-4 !py-2"
+            >
+              ← Previous
+            </button>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={page * 50 >= totalCount}
+              className="btn-secondary text-xs !px-4 !py-2"
+            >
+              Next →
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Password Reset Modal */}
+      {/* Password Reset Result Modal */}
       {resetResult && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setResetResult(null)}>
-          <div className="glass-card p-6 w-full max-w-md animate-scale-in" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-surface-100 mb-4">✓ Password Reset Successfully</h2>
-            <div className="bg-surface-800/80 rounded-xl p-4 space-y-2">
-              <div><span className="text-surface-400 text-sm">USN:</span> <span className="font-mono text-surface-200">{resetResult.usn}</span></div>
-              <div><span className="text-surface-400 text-sm">New Password:</span> <span className="font-mono text-lg font-bold text-emerald-400">{resetResult.new_password}</span></div>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setResetResult(null)}>
+          <div className="glass-card p-8 w-full max-w-md border border-amber-500/30 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/20">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z" />
+              </svg>
             </div>
-            <p className="text-xs text-amber-400 mt-3">⚠ This password will not be shown again</p>
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => { navigator.clipboard.writeText(resetResult.new_password); toast.success('Copied!'); }} className="btn-secondary flex-1">Copy</button>
-              <button onClick={() => setResetResult(null)} className="btn-primary flex-1">Done</button>
+
+            <h2 className="text-xl font-extrabold text-white mb-2">New Password Generated</h2>
+            <p className="text-surface-400 text-xs mb-4">Please note down this voting password and deliver it to the student.</p>
+
+            <div className="bg-surface-950 p-4 rounded-xl border border-surface-800 space-y-2 mb-4">
+              <div className="flex justify-between text-xs">
+                <span className="text-surface-400 font-semibold">Student USN:</span>
+                <span className="font-mono text-primary-300 font-bold">{resetResult.usn}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-surface-800">
+                <span className="text-surface-400 font-semibold">New Voting Pass:</span>
+                <span className="font-mono text-lg font-extrabold text-emerald-400">{resetResult.new_password}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { navigator.clipboard.writeText(resetResult.new_password); toast.success('Password copied'); }}
+                className="btn-secondary flex-1 text-xs"
+              >
+                Copy Password
+              </button>
+              <button onClick={() => setResetResult(null)} className="btn-primary flex-1 text-xs">Close</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Import Modal */}
+      {/* Excel Import Multi-Step Modal */}
       {showUpload && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeUploadModal}>
-          <div className="glass-card p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={closeUploadModal}>
+          <div className="glass-card p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-surface-700/60 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
 
-            {/* Step: Upload */}
+            {/* Step 1: File Upload */}
             {uploadStep === 'upload' && (
-              <div>
-                <h2 className="text-xl font-bold text-surface-100 mb-4">📊 Import Voters from Excel</h2>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-surface-800">
+                  <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                    <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Import Student Voters (Excel)</span>
+                  </h2>
+                  <button onClick={closeUploadModal} className="text-surface-400 hover:text-white">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
                 <div
-                  className="border-2 border-dashed border-surface-600/50 rounded-2xl p-12 text-center hover:border-primary-500/50 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-surface-700 hover:border-primary-500 rounded-3xl p-12 text-center bg-surface-950/50 hover:bg-primary-500/5 transition-all cursor-pointer group"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <div className="w-16 h-16 bg-primary-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-primary-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary-500/20 group-hover:scale-110 transition-transform">
                     <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <p className="text-surface-200 font-medium">Click to upload or drag and drop</p>
-                  <p className="text-surface-500 text-sm mt-1">Supports .xlsx files with USN, Name, and Class columns</p>
+                  <p className="text-white font-bold text-base">Click to select or drop Excel File (.xlsx)</p>
+                  <p className="text-surface-400 text-xs mt-1">Excel file must contain student USN, Full Name, and Class columns.</p>
                 </div>
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
-                <button onClick={closeUploadModal} className="btn-secondary mt-4 w-full">Cancel</button>
+
+                <div className="flex justify-end pt-4 border-t border-surface-800">
+                  <button onClick={closeUploadModal} className="btn-secondary">Cancel</button>
+                </div>
               </div>
             )}
 
-            {/* Step: Preview & Column Mapping */}
+            {/* Step 2: Column Mapping */}
             {uploadStep === 'preview' && previewData && (
-              <div>
-                <h2 className="text-xl font-bold text-surface-100 mb-4">Column Mapping</h2>
-                <p className="text-surface-400 text-sm mb-4">{previewData.total_rows} rows found. Map the columns:</p>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-surface-800">
+                  <h2 className="text-xl font-extrabold text-white">Map Excel Columns</h2>
+                  <span className="text-xs font-bold text-primary-400">{previewData.total_rows} Total Rows Found</span>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-surface-950 rounded-2xl border border-surface-800">
                   <div>
                     <label className="label-text">USN Column *</label>
                     <select className="input-field" value={mapping.usn_column} onChange={e => setMapping({ ...mapping, usn_column: e.target.value })}>
-                      <option value="">Select...</option>
+                      <option value="">Select Column...</option>
                       {previewData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="label-text">Name Column</label>
+                    <label className="label-text">Student Name Column</label>
                     <select className="input-field" value={mapping.name_column} onChange={e => setMapping({ ...mapping, name_column: e.target.value })}>
                       <option value="">None</option>
                       {previewData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="label-text">Class Column</label>
+                    <label className="label-text">Class / Branch Column</label>
                     <select className="input-field" value={mapping.class_column} onChange={e => setMapping({ ...mapping, class_column: e.target.value })}>
                       <option value="">None</option>
                       {previewData.headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -355,121 +457,105 @@ export default function Voters() {
                   </div>
                 </div>
 
-                <div className="section-title mb-2">Preview (first 10 rows)</div>
-                <div className="table-container mb-4">
+                <div className="table-container max-h-64 overflow-y-auto">
                   <table>
                     <thead><tr>{previewData.headers.map(h => <th key={h}>{h}</th>)}</tr></thead>
                     <tbody>
                       {previewData.sample_rows.map((row, i) => (
-                        <tr key={i}>{previewData.headers.map(h => <td key={h} className="text-sm">{row[h] || ''}</td>)}</tr>
+                        <tr key={i}>{previewData.headers.map(h => <td key={h} className="text-xs">{row[h] || ''}</td>)}</tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="flex gap-3 justify-end">
+                <div className="flex gap-3 justify-end pt-4 border-t border-surface-800">
                   <button onClick={closeUploadModal} className="btn-secondary">Cancel</button>
-                  <button onClick={handleValidate} className="btn-primary">Validate</button>
+                  <button onClick={handleValidate} className="btn-primary px-8">Validate Data</button>
                 </div>
               </div>
             )}
 
-            {/* Step: Validation */}
+            {/* Step 3: Validation */}
             {uploadStep === 'validate' && validationResult && (
-              <div>
-                <h2 className="text-xl font-bold text-surface-100 mb-4">Import Preview</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-extrabold text-white">Validation Results</h2>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-                  <div className="stat-card !p-3">
-                    <div className="text-2xl font-bold text-surface-200">{validationResult.summary.total_rows}</div>
-                    <div className="text-xs text-surface-500">Total Rows</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-xl bg-surface-950 border border-surface-800 text-center">
+                    <div className="text-2xl font-extrabold text-white">{validationResult.summary.total_rows}</div>
+                    <div className="text-[10px] uppercase font-bold text-surface-400">Total Rows</div>
                   </div>
-                  <div className="stat-card !p-3">
-                    <div className="text-2xl font-bold text-emerald-400">{validationResult.summary.valid_count}</div>
-                    <div className="text-xs text-surface-500">Valid</div>
+                  <div className="p-4 rounded-xl bg-surface-950 border border-emerald-500/30 text-center">
+                    <div className="text-2xl font-extrabold text-emerald-400">{validationResult.summary.valid_count}</div>
+                    <div className="text-[10px] uppercase font-bold text-emerald-400">Valid to Import</div>
                   </div>
-                  <div className="stat-card !p-3">
-                    <div className="text-2xl font-bold text-amber-400">{validationResult.summary.duplicate_count}</div>
-                    <div className="text-xs text-surface-500">Duplicates</div>
+                  <div className="p-4 rounded-xl bg-surface-950 border border-amber-500/30 text-center">
+                    <div className="text-2xl font-extrabold text-amber-400">{validationResult.summary.duplicate_count}</div>
+                    <div className="text-[10px] uppercase font-bold text-amber-400">Duplicates</div>
                   </div>
-                  <div className="stat-card !p-3">
-                    <div className="text-2xl font-bold text-red-400">{validationResult.summary.invalid_count}</div>
-                    <div className="text-xs text-surface-500">Invalid</div>
-                  </div>
-                  <div className="stat-card !p-3">
-                    <div className="text-2xl font-bold text-blue-400">{validationResult.summary.existing_count}</div>
-                    <div className="text-xs text-surface-500">Existing</div>
+                  <div className="p-4 rounded-xl bg-surface-950 border border-rose-500/30 text-center">
+                    <div className="text-2xl font-extrabold text-rose-400">{validationResult.summary.invalid_count}</div>
+                    <div className="text-[10px] uppercase font-bold text-rose-400">Invalid</div>
                   </div>
                 </div>
 
-                {/* Show errors */}
-                {validationResult.duplicates.length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-sm font-medium text-amber-400 mb-1">Duplicate USNs ({validationResult.duplicates.length})</div>
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 max-h-32 overflow-y-auto text-xs">
-                      {validationResult.duplicates.map((d, i) => <div key={i}>Row {d.row}: {d.usn} — {d.reason}</div>)}
-                    </div>
-                  </div>
-                )}
-                {validationResult.invalid.length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-sm font-medium text-red-400 mb-1">Invalid ({validationResult.invalid.length})</div>
-                    <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3 max-h-32 overflow-y-auto text-xs">
-                      {validationResult.invalid.map((d, i) => <div key={i}>Row {d.row}: {d.usn || '(empty)'} — {d.reason}</div>)}
-                    </div>
-                  </div>
-                )}
-                {validationResult.existing.length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-sm font-medium text-blue-400 mb-1">Already Registered ({validationResult.existing.length})</div>
-                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 max-h-32 overflow-y-auto text-xs">
-                      {validationResult.existing.map((d, i) => <div key={i}>Row {d.row}: {d.usn} — {d.reason}</div>)}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3 justify-end mt-4">
+                <div className="flex gap-3 justify-end pt-4 border-t border-surface-800">
                   <button onClick={closeUploadModal} className="btn-secondary">Cancel</button>
-                  <button onClick={handleConfirmImport} disabled={validationResult.summary.valid_count === 0 || importing} className="btn-success">
-                    {importing ? 'Importing...' : `Import ${validationResult.summary.valid_count} Valid Students`}
+                  <button
+                    onClick={handleConfirmImport}
+                    disabled={validationResult.summary.valid_count === 0 || importing}
+                    className="btn-success px-8"
+                  >
+                    {importing ? 'Importing Voters...' : `Confirm & Create ${validationResult.summary.valid_count} Voters`}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step: Credentials */}
+            {/* Step 4: Credentials Output */}
             {uploadStep === 'credentials' && credentials && (
-              <div>
-                <h2 className="text-xl font-bold text-surface-100 mb-2">✓ Import Complete</h2>
-                <p className="text-surface-400 text-sm mb-4">{credentials.imported_count} voters imported. Save these credentials now — they cannot be retrieved later.</p>
-
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4">
-                  <p className="text-amber-400 text-sm font-medium">⚠ These passwords will NOT be shown again. Copy, print, or export them now.</p>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-extrabold text-white">Import Complete!</h2>
+                    <p className="text-xs text-surface-400">{credentials.imported_count} voter accounts generated with secret credentials.</p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4 no-print">
-                  <button onClick={copyCredentials} className="btn-secondary text-sm">📋 Copy</button>
-                  <button onClick={printCredentials} className="btn-secondary text-sm">🖨 Print</button>
-                  <button onClick={exportCredentialsExcel} className="btn-secondary text-sm">📥 Export CSV</button>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <button onClick={copyCredentials} className="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>📋 Copy Credentials</span>
+                  </button>
+                  <button onClick={printCredentials} className="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>🖨 Print Credentials</span>
+                  </button>
+                  <button onClick={exportCredentialsExcel} className="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>📥 Export CSV File</span>
+                  </button>
                 </div>
 
-                <div className="table-container max-h-96 overflow-y-auto">
+                <div className="table-container max-h-80 overflow-y-auto">
                   <table>
-                    <thead><tr><th>Name</th><th>USN</th><th>Class</th><th>Password</th></tr></thead>
+                    <thead><tr><th>Student Name</th><th>USN</th><th>Class</th><th>Generated Password</th></tr></thead>
                     <tbody>
                       {credentials.credentials.map((c, i) => (
                         <tr key={i}>
-                          <td className="text-surface-300">{c.name || '—'}</td>
-                          <td className="font-mono text-sm text-surface-200">{c.usn}</td>
-                          <td className="text-surface-400">{c.class_name || '—'}</td>
-                          <td className="font-mono font-bold text-emerald-400">{c.password}</td>
+                          <td className="text-white font-semibold">{c.name || '—'}</td>
+                          <td className="font-mono text-sm text-primary-300 font-bold">{c.usn}</td>
+                          <td className="text-surface-300">{c.class_name || '—'}</td>
+                          <td className="font-mono font-extrabold text-emerald-400 text-sm">{c.password}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <button onClick={closeUploadModal} className="btn-primary mt-4 w-full">Done</button>
+                <div className="pt-4 border-t border-surface-800">
+                  <button onClick={closeUploadModal} className="btn-primary w-full py-3">Finish & Close</button>
+                </div>
               </div>
             )}
           </div>

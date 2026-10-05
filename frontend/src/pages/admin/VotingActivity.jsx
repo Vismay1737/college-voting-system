@@ -38,54 +38,89 @@ export default function VotingActivity() {
     }
   };
 
-  // Auto-refresh every 10 seconds
+  // Auto-refresh every 5 seconds for live activity
   useEffect(() => {
     if (!selectedElection) return;
-    const interval = setInterval(loadActivity, 10000);
+    const interval = setInterval(loadActivity, 5000);
     return () => clearInterval(interval);
   }, [selectedElection]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-80 gap-3">
+        <div className="w-10 h-10 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+        <p className="text-surface-400 text-sm font-semibold">Connecting to Live Activity Stream...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="page-title">Voting Activity</h1>
-        <select className="input-field !w-auto" value={selectedElection} onChange={e => setSelectedElection(e.target.value)}>
-          {elections.map(el => <option key={el.id} value={el.id}>{el.name}</option>)}
-        </select>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Page Header & Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="page-title">
+            <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Live Voting Activity</span>
+          </h1>
+          <p className="text-surface-400 text-sm mt-1">Real-time vote audit log stream as ballots are submitted.</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select className="input-field !w-auto" value={selectedElection} onChange={e => setSelectedElection(e.target.value)}>
+            {elections.map(el => <option key={el.id} value={el.id}>{el.name}</option>)}
+          </select>
+        </div>
       </div>
 
-      <div className="glass-card p-4 flex items-center gap-2">
-        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-soft"></div>
-        <span className="text-sm text-surface-400">Auto-refreshing every 10 seconds</span>
-        <button onClick={loadActivity} className="ml-auto btn-secondary text-xs !px-3 !py-1">Refresh Now</button>
+      {/* Live Stream Bar */}
+      <div className="glass-card p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          <span className="text-xs font-bold text-white uppercase tracking-wider">Live Stream Active • Auto-Refreshing Every 5s</span>
+        </div>
+        <button onClick={loadActivity} className="btn-secondary text-xs py-1.5 px-4 font-bold flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          <span>Refresh Feed</span>
+        </button>
       </div>
 
+      {/* Feed List */}
       {activity.length === 0 ? (
-        <div className="glass-card p-12 text-center text-surface-400">
-          No voting activity yet for this election.
+        <div className="glass-card p-16 text-center max-w-xl mx-auto">
+          <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4 text-surface-500">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">No Votes Logged Yet</h3>
+          <p className="text-surface-400 text-sm">Activity feed will update dynamically when voters cast their ballots.</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {activity.map((item, i) => (
-            <div key={i} className="glass-card p-4 flex items-center gap-4 animate-slide-up" style={{ animationDelay: `${i * 30}ms` }}>
-              <div className="w-10 h-10 bg-emerald-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-surface-200">{item.voter_name}</span>
-                  <span className="text-xs text-surface-500 font-mono">{item.voter_usn}</span>
+            <div key={i} className="glass-card-hover p-4 flex items-center justify-between gap-4 border border-surface-800">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-md">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-                <span className="text-xs text-surface-500">{item.class_name}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-white text-base">{item.voter_name || 'Anonymous Student'}</span>
+                    <span className="font-mono text-xs text-primary-300 font-bold px-2 py-0.5 rounded-md bg-primary-500/10 border border-primary-500/20">{item.voter_usn}</span>
+                  </div>
+                  <span className="text-xs text-surface-400 font-medium">{item.class_name || 'Unassigned Class'}</span>
+                </div>
               </div>
-              <div className="text-xs text-surface-500">
-                {new Date(item.voted_at).toLocaleTimeString()}
+
+              <div className="text-right">
+                <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                  {new Date(item.voted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
               </div>
             </div>
           ))}
